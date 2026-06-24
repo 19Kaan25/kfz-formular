@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { TRANSLATIONS, type Lang, type T } from './translations'
+import { supabase } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,108 +39,7 @@ const INITIAL: FormValues = {
   beitragHaftpflicht: '',
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmtDate(iso: string): string {
-  if (!iso) return ''
-  const [y, m, d] = iso.split('-')
-  return `${d}.${m}.${y}`
-}
-
-function findLabel(opts: { value: string; label: string }[], val: string): string {
-  return opts.find(o => o.value === val)?.label ?? val
-}
-
-function buildSummaryText(v: FormValues, t: T): string {
-  const today = fmtDate(new Date().toISOString().split('T')[0])
-  const row = (label: string, value: string) => `${label}\n  ${value || '–'}`
-
-  const statusLabel =
-    v.fahrzeugStatus === 'neu' ? t.sumStatusNeu
-    : v.fahrzeugStatus === 'wechsel' ? t.sumStatusWechsel
-    : v.fahrzeugStatus === 'anderer' ? t.sumStatusAnderer
-    : ''
-
-  const vorvertragLabel =
-    v.vorvertrag === 'vorversicherer' ? t.sumVorvertragVorversicherer
-    : v.vorvertrag === 'vn_gekuendigt' ? t.sumVorvertragVnGekuendigt
-    : ''
-
-  const fahrleistungLabel =
-    v.jaehrlicheFahrleistung === 'unbegrenzt'
-      ? t.sumFahrleistungUnbegrenzt
-      : v.jaehrlicheFahrleistung ? `${v.jaehrlicheFahrleistung} km` : ''
-
-  return [
-    `KFZ-ANFRAGE  ·  ${t.sumDateLabel}: ${today}`,
-    '',
-    '═══════════════════════════════════════════',
-    t.sumSection1,
-    '───────────────────────────────────────────',
-    row(t.sumEmail, v.email),
-    row(t.sumVorname, v.vorname),
-    row(t.sumName, v.name),
-    row(t.sumStrasse, v.strasse),
-    row(t.sumPlz, v.plz),
-    row(t.sumOrt, v.ort),
-    row(t.sumGeburtsdatum, fmtDate(v.geburtsdatum)),
-    '',
-    '═══════════════════════════════════════════',
-    t.sumSection2,
-    '───────────────────────────────────────────',
-    row(t.sumHsn, v.hsn),
-    row(t.sumTsn, v.tsn),
-    row(t.sumFahrzeugKategorie, findLabel(t.fahrzeugKategorieOptions, v.fahrzeugKategorie)),
-    row(t.sumHersteller, v.hersteller),
-    row(t.sumErstzulassung, fmtDate(v.datumErstzulassung)),
-    row(t.sumErwerb, fmtDate(v.datumErwerb)),
-    row(t.sumNeuwert, v.neuwert ? `${v.neuwert} €` : ''),
-    row(t.sumFahrleistung, fahrleistungLabel),
-    '',
-    '═══════════════════════════════════════════',
-    t.sumSection3,
-    '───────────────────────────────────────────',
-    row(t.sumFahrzeugStatus, statusLabel),
-    ...(v.fahrzeugStatus === 'anderer'
-      ? [row(t.sumNameFahrzeughalter, v.nameFahrzeughalter), row(t.sumPlzFahrzeughalter, v.plzFahrzeughalter)]
-      : []),
-    '',
-    '═══════════════════════════════════════════',
-    t.sumSection4,
-    '───────────────────────────────────────────',
-    row(t.sumAbstellort, findLabel(t.abstellortOptions, v.abstellort)),
-    row(t.sumAbschliessbar, v.abstellortAbschliessbar === 'ja' ? t.ja : v.abstellortAbschliessbar === 'nein' ? t.nein : ''),
-    '',
-    '═══════════════════════════════════════════',
-    t.sumSection5,
-    '───────────────────────────────────────────',
-    row(t.sumNutzerkreis, findLabel(t.nutzerkreisOptions, v.nutzerkreis)),
-    row(t.sumSaisonStart, fmtDate(v.saisonStart)),
-    row(t.sumSaisonEnde, fmtDate(v.saisonEnde)),
-    '',
-    '═══════════════════════════════════════════',
-    t.sumSection6,
-    '───────────────────────────────────────────',
-    row(t.sumSfHaftpflicht, v.sfKlasseHaftpflicht),
-    row(t.sumVorvertrag, vorvertragLabel),
-    row(t.sumSfVollkasko, v.sfKlasseVollkasko),
-    row(t.sumSchaeden, v.gemeldeteSchaeden),
-    row(t.sumBeiVersicherer, v.beiWelchemVersicherer),
-    row(t.sumWieLange, v.wieLangeBeiVersicherer),
-    row(t.sumFinanzierung, findLabel(t.finanzierungOptions, v.finanzierung)),
-    ...(v.finanzierung && v.finanzierung !== 'eigenfinanziert'
-      ? [row(t.sumMehrwert, v.mehrwert ? `${v.mehrwert} €` : '')]
-      : []),
-    row(t.sumDeckung, findLabel(t.deckungOptions, v.deckungHaftpflicht)),
-    row(t.sumZahlungsart, findLabel(t.zahlungsartOptions, v.zahlungsart)),
-    row(t.sumZahlungsweise, findLabel(t.zahlungsweiseOptions, v.zahlungsweise)),
-    '',
-    t.sumDerzeitigerBeitrag,
-    row(t.sumVollkasko, v.beitragVollkasko ? `${v.beitragVollkasko} €` : ''),
-    row(t.sumTeilkasko, v.beitragTeilkasko ? `${v.beitragTeilkasko} €` : ''),
-    row(t.sumHaftpflicht, v.beitragHaftpflicht ? `${v.beitragHaftpflicht} €` : ''),
-  ].join('\n')
-}
+const LS_KEY = 'kfz_draft'
 
 // ─── UI-Komponenten ───────────────────────────────────────────────────────────
 
@@ -247,61 +147,27 @@ function RadioCards({ name, value, onChange, options, cols = 2 }: {
   )
 }
 
-// ─── Zusammenfassung ─────────────────────────────────────────────────────────
+// ─── Erfolgsmeldung ───────────────────────────────────────────────────────────
 
-function Zusammenfassung({ values, t, onBack }: { values: FormValues; t: T; onBack: () => void }) {
-  const [copied, setCopied] = useState(false)
-  const text = buildSummaryText(values, t)
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-    } catch {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      document.body.appendChild(ta)
-      ta.select()
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }
-
+function Erfolg({ t, onReset }: { t: T; onReset: () => void }) {
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-5">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3">
-          <span className="text-green-600 text-xl leading-none">✓</span>
-          <div>
-            <p className="font-semibold text-green-800 text-sm">{t.successTitle}</p>
-            <p className="text-green-700 text-xs mt-0.5">{t.successText}</p>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+          <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{t.summaryTitle}</h1>
-          <p className="text-xs text-gray-500 mt-1">{t.summarySubtitle}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.successTitle}</h1>
+          <p className="text-gray-500 mt-2 text-sm leading-relaxed">{t.successText}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-5 font-mono text-xs text-gray-800 whitespace-pre leading-relaxed overflow-x-auto">
-          {text}
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={handleCopy}
-            className={`flex-1 py-3 rounded-lg font-semibold text-sm transition-colors ${
-              copied ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            {copied ? t.copiedButton : t.copyButton}
-          </button>
-          <button
-            onClick={onBack}
-            className="flex-1 py-3 rounded-lg font-medium text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            {t.backButton}
-          </button>
-        </div>
+        <button
+          onClick={onReset}
+          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors"
+        >
+          {t.newRequestButton}
+        </button>
       </div>
     </div>
   )
@@ -316,7 +182,24 @@ export default function KfzFormularPage() {
   const [values, setValues] = useState<FormValues>(INITIAL)
   const [errors, setErrors] = useState<Errors>({})
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [showErrorBanner, setShowErrorBanner] = useState(false)
+
+  // localStorage: Entwurf laden
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY)
+      if (saved) setValues(JSON.parse(saved))
+    } catch { /* ignore */ }
+  }, [])
+
+  // localStorage: Entwurf speichern bei Änderung
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(values))
+    } catch { /* ignore */ }
+  }, [values])
 
   const set = (field: keyof FormValues) => (v: string) => {
     setValues(prev => ({ ...prev, [field]: v }))
@@ -346,25 +229,82 @@ export default function KfzFormularPage() {
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (validate()) {
-      setShowErrorBanner(false)
-      setSubmitted(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } else {
+    if (!validate()) {
       setShowErrorBanner(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
     }
+    setShowErrorBanner(false)
+    setLoading(true)
+    setSubmitError(null)
+
+    const { error } = await supabase.from('anfragen').insert({
+      email: values.email || null,
+      vorname: values.vorname,
+      nachname: values.name,
+      strasse: values.strasse,
+      plz: values.plz,
+      ort: values.ort,
+      geburtsdatum_vn: values.geburtsdatum,
+      hsn: values.hsn,
+      tsn: values.tsn,
+      fahrzeug_kategorie: values.fahrzeugKategorie || null,
+      hersteller: values.hersteller || null,
+      datum_erstzulassung: values.datumErstzulassung || null,
+      datum_erwerb: values.datumErwerb || null,
+      neuwert: values.neuwert || null,
+      jaehrliche_fahrleistung: values.jaehrlicheFahrleistung || null,
+      fahrzeug_status: values.fahrzeugStatus || null,
+      name_fahrzeughalter: values.nameFahrzeughalter || null,
+      plz_fahrzeughalter: values.plzFahrzeughalter || null,
+      abstellort: values.abstellort || null,
+      abstellort_abschliessbar: values.abstellortAbschliessbar || null,
+      nutzerkreis: values.nutzerkreis || null,
+      saison_start: values.saisonStart || null,
+      saison_ende: values.saisonEnde || null,
+      sf_klasse_haftpflicht: values.sfKlasseHaftpflicht || null,
+      vorvertrag: values.vorvertrag || null,
+      sf_klasse_vollkasko: values.sfKlasseVollkasko || null,
+      gemeldete_schaeden: values.gemeldeteSchaeden || null,
+      bei_welchem_versicherer: values.beiWelchemVersicherer || null,
+      wie_lange_bei_versicherer: values.wieLangeBeiVersicherer || null,
+      finanzierung: values.finanzierung || null,
+      mehrwert: values.mehrwert || null,
+      deckung_haftpflicht: values.deckungHaftpflicht || null,
+      zahlungsart: values.zahlungsart || null,
+      zahlungsweise: values.zahlungsweise || null,
+      beitrag_vollkasko: values.beitragVollkasko || null,
+      beitrag_teilkasko: values.beitragTeilkasko || null,
+      beitrag_haftpflicht: values.beitragHaftpflicht || null,
+    })
+
+    setLoading(false)
+
+    if (error) {
+      setSubmitError(t.errSubmit)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    // Erfolgreich: Entwurf löschen
+    try { localStorage.removeItem(LS_KEY) } catch { /* ignore */ }
+    setSubmitted(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleReset = () => {
+    setValues(INITIAL)
+    setErrors({})
+    setSubmitted(false)
+    setShowErrorBanner(false)
+    setSubmitError(null)
+    window.scrollTo({ top: 0 })
   }
 
   if (submitted) {
-    return (
-      <Zusammenfassung
-        values={values} t={t}
-        onBack={() => { setSubmitted(false); window.scrollTo({ top: 0 }) }}
-      />
-    )
+    return <Erfolg t={t} onReset={handleReset} />
   }
 
   return (
@@ -390,7 +330,7 @@ export default function KfzFormularPage() {
           </button>
         </div>
 
-        {/* Fehler-Banner */}
+        {/* Fehler-Banner (Validierung) */}
         {showErrorBanner && (
           <div className="mb-5 bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
             <span className="text-red-500 text-lg leading-none">⚠</span>
@@ -398,6 +338,14 @@ export default function KfzFormularPage() {
               <p className="font-semibold text-red-800 text-sm">{t.errBannerTitle}</p>
               <p className="text-red-700 text-xs mt-0.5">{t.errBannerText}</p>
             </div>
+          </div>
+        )}
+
+        {/* Fehler-Banner (Supabase) */}
+        {submitError && (
+          <div className="mb-5 bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
+            <span className="text-red-500 text-lg leading-none">⚠</span>
+            <p className="text-red-800 text-sm font-medium">{submitError}</p>
           </div>
         )}
 
@@ -622,9 +570,10 @@ export default function KfzFormularPage() {
             <p className="text-xs text-gray-500 mb-4 leading-relaxed">{t.submitNote}</p>
             <button
               type="submit"
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors"
+              disabled={loading}
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg text-sm transition-colors"
             >
-              {t.submitButton}
+              {loading ? t.submitLoading : t.submitButton}
             </button>
           </div>
 

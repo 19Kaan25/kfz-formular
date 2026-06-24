@@ -7,7 +7,10 @@ export interface T {
   pageTitle: string
   pageSubtitle: string
   submitButton: string
+  submitLoading: string
   submitNote: string
+  newRequestButton: string
+  errSubmit: string
 
   // Fehler-Banner
   errBannerTitle: string
@@ -196,13 +199,16 @@ const de: T = {
   pageTitle: 'KFZ-Anfrage',
   pageSubtitle: 'Felder mit * sind Pflichtfelder. Alle anderen sind freiwillig, helfen aber bei einem besseren Angebot.',
   submitButton: 'Angaben absenden →',
+  submitLoading: 'Wird gesendet …',
+  newRequestButton: 'Neue Anfrage stellen',
+  errSubmit: 'Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
   submitNote: 'Mit dem Absenden bestätigen Sie, dass Ihre Angaben korrekt sind. Die Daten werden ausschließlich zur Erstellung eines Versicherungsangebots verwendet und nicht an Dritte weitergegeben.',
 
   errBannerTitle: 'Bitte Pflichtfelder ausfüllen',
   errBannerText: 'Einige Pflichtfelder fehlen oder enthalten ungültige Werte. Bitte prüfen Sie die rot markierten Felder.',
 
-  successTitle: 'Angaben vollständig!',
-  successText: 'Kopieren Sie alle Angaben mit dem Button unten und tippen Sie sie in NAFI ein.',
+  successTitle: 'Vielen Dank!',
+  successText: 'Ihre Angaben wurden erfolgreich übermittelt. Wir melden uns bald bei Ihnen.',
   summaryTitle: 'Ihre Angaben – Übersicht',
   summarySubtitle: 'Reihenfolge entspricht der NAFI-Eingabemaske.',
   copyButton: '📋 Alle Angaben kopieren',
@@ -420,13 +426,16 @@ const tr: T = {
   pageTitle: 'Araç Sigortası Başvurusu',
   pageSubtitle: '* ile işaretli alanlar zorunludur. Diğer alanlar isteğe bağlıdır, ancak daha iyi bir teklif almanıza yardımcı olur.',
   submitButton: 'Bilgileri Gönder →',
+  submitLoading: 'Gönderiliyor …',
+  newRequestButton: 'Yeni talep oluştur',
+  errSubmit: 'Talep gönderilemedi. Lütfen tekrar deneyin.',
   submitNote: 'Göndererek bilgilerinizin doğru olduğunu onaylıyorsunuz. Verileriniz yalnızca sigorta teklifinizi hazırlamak için kullanılacak ve üçüncü şahıslarla paylaşılmayacaktır.',
 
   errBannerTitle: 'Lütfen zorunlu alanları doldurun',
   errBannerText: 'Bazı zorunlu alanlar eksik veya hatalı. Lütfen kırmızı ile işaretli alanları kontrol edin.',
 
-  successTitle: 'Bilgiler tamamlandı!',
-  successText: "Aşağıdaki düğmeyle tüm bilgileri kopyalayın ve NAFI'ye girin.",
+  successTitle: 'Teşekkürler!',
+  successText: 'Bilgileriniz başarıyla iletildi. Yakında sizinle iletişime geçeceğiz.',
   summaryTitle: 'Bilgileriniz – Özet',
   summarySubtitle: 'Sıralama NAFI giriş ekranına uygundur.',
   copyButton: '📋 Tüm Bilgileri Kopyala',
