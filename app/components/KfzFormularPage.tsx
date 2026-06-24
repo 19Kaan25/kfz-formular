@@ -22,7 +22,6 @@ interface FormValues {
   datumErstzulassung: string
   datumErwerb: string
   neuwert: string
-  anzahlTueren: string
   jaehrlicheFahrleistung: string
   // 3. Fahrzeugstatus
   fahrzeugStatus: string
@@ -32,9 +31,6 @@ interface FormValues {
   abstellort: string
   abstellortAbschliessbar: string
   // 5. Nutzung
-  zweckGewerblFahrten: string
-  erstfahrzeugVersicherer: string
-  erstfahrzeugHalter: string
   nutzerkreis: string
   saisonStart: string
   saisonEnde: string
@@ -43,7 +39,6 @@ interface FormValues {
   vorvertrag: string
   sfKlasseVollkasko: string
   gemeldeteSchaeden: string
-  versicherung7Jahre: string
   beiWelchemVersicherer: string
   wieLangeBeiVersicherer: string
   finanzierung: string
@@ -54,7 +49,6 @@ interface FormValues {
   beitragVollkasko: string
   beitragTeilkasko: string
   beitragHaftpflicht: string
-  beitragGesellschaft: string
 }
 
 type Errors = Partial<Record<keyof FormValues, string>>
@@ -64,16 +58,15 @@ type Errors = Partial<Record<keyof FormValues, string>>
 const INITIAL: FormValues = {
   email: '', vorname: '', name: '', strasse: '', plz: '', ort: '',
   geburtsdatum: '', hsn: '', tsn: '', fahrzeugKategorie: '', hersteller: '',
-  datumErstzulassung: '', datumErwerb: '', neuwert: '', anzahlTueren: '',
+  datumErstzulassung: '', datumErwerb: '', neuwert: '',
   jaehrlicheFahrleistung: '', fahrzeugStatus: '', nameFahrzeughalter: '',
   plzFahrzeughalter: '', abstellort: '', abstellortAbschliessbar: '',
-  zweckGewerblFahrten: '', erstfahrzeugVersicherer: '', erstfahrzeugHalter: '',
   nutzerkreis: '', saisonStart: '', saisonEnde: '', sfKlasseHaftpflicht: '',
   vorvertrag: '', sfKlasseVollkasko: '', gemeldeteSchaeden: '',
-  versicherung7Jahre: '', beiWelchemVersicherer: '', wieLangeBeiVersicherer: '',
+  beiWelchemVersicherer: '', wieLangeBeiVersicherer: '',
   finanzierung: '', mehrwert: '', deckungHaftpflicht: '', zahlungsart: '',
   zahlungsweise: '', beitragVollkasko: '', beitragTeilkasko: '',
-  beitragHaftpflicht: '', beitragGesellschaft: '',
+  beitragHaftpflicht: '',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -104,7 +97,6 @@ const NUTZERKREIS_LABELS: Record<string, string> = {
   vn_hauptnutzer: 'VN ist Hauptnutzer',
   vn_partner: 'VN + Partner',
   ohne_einschraenkung: 'Ohne Einschränkung',
-  nur_partner: 'Nur der Partner',
   vn_haeusliche_gemeinschaft: 'VN + häusl. Gemeinschaft',
 }
 const FINANZIERUNG_LABELS: Record<string, string> = {
@@ -153,8 +145,7 @@ function buildSummaryText(v: FormValues): string {
     row('Datum Erstzulassung:', fmtDate(v.datumErstzulassung)),
     row('Datum Erwerb:', fmtDate(v.datumErwerb)),
     row('Neuwert (€):', v.neuwert ? `${v.neuwert} €` : ''),
-    row('Anzahl Türen:', v.anzahlTueren),
-    row('Jährl. Fahrleistung (km):', v.jaehrlicheFahrleistung ? `${v.jaehrlicheFahrleistung} km` : ''),
+    row('Jährl. Fahrleistung (km):', v.jaehrlicheFahrleistung === 'unbegrenzt' ? 'Unbegrenzt' : v.jaehrlicheFahrleistung ? `${v.jaehrlicheFahrleistung} km` : ''),
     '',
     '═══════════════════════════════════════════',
     '3. FAHRZEUG-STATUS',
@@ -173,9 +164,6 @@ function buildSummaryText(v: FormValues): string {
     '═══════════════════════════════════════════',
     '5. NUTZUNG / NUTZERKREIS',
     '───────────────────────────────────────────',
-    row('Zweck gewerbl. Fahrten:', v.zweckGewerblFahrten),
-    row('Erstfahrzeug versichert bei:', v.erstfahrzeugVersicherer),
-    row('Halter Erstfahrzeug:', v.erstfahrzeugHalter),
     row('Nutzerkreis:', NUTZERKREIS_LABELS[v.nutzerkreis] ?? v.nutzerkreis),
     row('Saisonkennzeichen Start:', fmtDate(v.saisonStart)),
     row('Saisonkennzeichen Ende:', fmtDate(v.saisonEnde)),
@@ -184,10 +172,9 @@ function buildSummaryText(v: FormValues): string {
     '6. DATEN ZUR VERSICHERUNG',
     '───────────────────────────────────────────',
     row('SF-Klasse Haftpflicht:', v.sfKlasseHaftpflicht),
-    row('Vorvertrag:', v.vorvertrag === 'vorversicherer' ? 'Durch Vorversicherer' : v.vorvertrag === 'vn_gekuendigt' ? 'VN gekündigt' : ''),
+    row('Vorvertrag:', v.vorvertrag === 'vorversicherer' ? 'Durch Vorversicherer' : v.vorvertrag === 'vn_gekuendigt' ? 'Versicherungsnehmer gekündigt' : ''),
     row('SF-Klasse Vollkasko:', v.sfKlasseVollkasko),
     row('Gemeldete Schäden (2 J.):', v.gemeldeteSchaeden),
-    row('Versicherung 7 Jahre:', v.versicherung7Jahre === 'ja' ? 'Ja' : v.versicherung7Jahre === 'nein' ? 'Nein' : ''),
     row('Bei welchem Versicherer:', v.beiWelchemVersicherer),
     row('Wie lange beim Versicherer:', v.wieLangeBeiVersicherer),
     row('Finanzierung:', FINANZIERUNG_LABELS[v.finanzierung] ?? v.finanzierung),
@@ -202,7 +189,6 @@ function buildSummaryText(v: FormValues): string {
     row('  Vollkasko:', v.beitragVollkasko ? `${v.beitragVollkasko} €` : ''),
     row('  Teilkasko:', v.beitragTeilkasko ? `${v.beitragTeilkasko} €` : ''),
     row('  Haftpflicht:', v.beitragHaftpflicht ? `${v.beitragHaftpflicht} €` : ''),
-    row('  Gesellschaft:', v.beitragGesellschaft),
   ]
 
   return lines.join('\n')
@@ -426,6 +412,11 @@ export default function KfzFormularPage() {
     if (!values.hsn.trim()) e.hsn = 'Bitte HSN eingeben.'
     else if (!/^\d{4}$/.test(values.hsn.trim())) e.hsn = 'HSN besteht aus genau 4 Ziffern.'
     if (!values.tsn.trim()) e.tsn = 'Bitte TSN eingeben.'
+    if (values.fahrzeugStatus === 'anderer') {
+      if (!values.nameFahrzeughalter.trim()) e.nameFahrzeughalter = 'Bitte Namen des Fahrzeughalters eingeben.'
+      if (!values.plzFahrzeughalter.trim()) e.plzFahrzeughalter = 'Bitte PLZ des Fahrzeughalters eingeben.'
+      else if (!/^\d{5}$/.test(values.plzFahrzeughalter.trim())) e.plzFahrzeughalter = 'PLZ muss 5 Ziffern haben.'
+    }
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       e.email = 'Bitte gültige E-Mail-Adresse eingeben.'
     setErrors(e)
@@ -566,19 +557,16 @@ export default function KfzFormularPage() {
             <Field label="Neuwert (€)" optional>
               <TextInput id="neuwert" type="number" value={values.neuwert} onChange={set('neuwert')} placeholder="z. B. 25000" />
             </Field>
-            <Field label="Anzahl Türen" optional>
-              <RadioCards
-                name="anzahlTueren" value={values.anzahlTueren} onChange={set('anzahlTueren')}
-                options={['2', '3', '4', '5'].map(n => ({ value: n, label: `${n} Türen` }))}
-              />
-            </Field>
             <Field label="Jährliche Fahrleistung" optional>
               <SelectInput
                 id="jaehrlicheFahrleistung" value={values.jaehrlicheFahrleistung} onChange={set('jaehrlicheFahrleistung')}
-                options={[3000, 6000, 9000, 12000, 15000, 18000, 21000].map(n => ({
-                  value: String(n),
-                  label: `${n.toLocaleString('de-DE')} km`,
-                }))}
+                options={[
+                  ...[3000, 6000, 9000, 12000, 15000, 18000, 21000].map(n => ({
+                    value: String(n),
+                    label: `${n.toLocaleString('de-DE')} km`,
+                  })),
+                  { value: 'unbegrenzt', label: 'Unbegrenzt' },
+                ]}
               />
             </Field>
           </SectionCard>
@@ -597,11 +585,11 @@ export default function KfzFormularPage() {
             </Field>
             {values.fahrzeugStatus === 'anderer' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4 border-l-2 border-blue-200">
-                <Field label="Name des Fahrzeughalters" optional>
-                  <TextInput id="nameFahrzeughalter" value={values.nameFahrzeughalter} onChange={set('nameFahrzeughalter')} />
+                <Field label="Name des Fahrzeughalters" required>
+                  <TextInput id="nameFahrzeughalter" value={values.nameFahrzeughalter} onChange={set('nameFahrzeughalter')} error={errors.nameFahrzeughalter} />
                 </Field>
-                <Field label="PLZ des Fahrzeughalters" optional>
-                  <TextInput id="plzFahrzeughalter" value={values.plzFahrzeughalter} onChange={set('plzFahrzeughalter')} maxLength={5} />
+                <Field label="PLZ des Fahrzeughalters" required>
+                  <TextInput id="plzFahrzeughalter" value={values.plzFahrzeughalter} onChange={set('plzFahrzeughalter')} maxLength={5} error={errors.plzFahrzeughalter} />
                 </Field>
               </div>
             )}
@@ -634,20 +622,6 @@ export default function KfzFormularPage() {
 
           {/* ─── 5. Nutzung / Nutzerkreis ─── */}
           <SectionCard num={5} title="Nutzung / Nutzerkreis">
-            <Field
-              label="Zweck der gewerblichen Fahrten" optional
-              help="Nur ausfüllen, wenn das Fahrzeug gewerblich genutzt wird."
-            >
-              <TextInput id="zweckGewerblFahrten" value={values.zweckGewerblFahrten} onChange={set('zweckGewerblFahrten')} placeholder="z. B. Kundenbesuche" />
-            </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Wo ist Ihr Erstfahrzeug versichert?" optional>
-                <TextInput id="erstfahrzeugVersicherer" value={values.erstfahrzeugVersicherer} onChange={set('erstfahrzeugVersicherer')} placeholder="z. B. Allianz" />
-              </Field>
-              <Field label="Wer ist Halter des Erstfahrzeugs?" optional>
-                <TextInput id="erstfahrzeugHalter" value={values.erstfahrzeugHalter} onChange={set('erstfahrzeugHalter')} />
-              </Field>
-            </div>
             <Field label="Nutzerkreis" optional help="VN = Versicherungsnehmer (die Person, die den Vertrag abschließt)">
               <RadioCards
                 name="nutzerkreis" value={values.nutzerkreis} onChange={set('nutzerkreis')}
@@ -656,7 +630,6 @@ export default function KfzFormularPage() {
                   { value: 'vn_hauptnutzer', label: 'VN ist Hauptnutzer' },
                   { value: 'vn_partner', label: 'VN + Partner' },
                   { value: 'ohne_einschraenkung', label: 'Ohne Einschränkung' },
-                  { value: 'nur_partner', label: 'Nur der Partner' },
                   { value: 'vn_haeusliche_gemeinschaft', label: 'VN + häusl. Gemeinschaft' },
                 ]}
               />
@@ -696,18 +669,12 @@ export default function KfzFormularPage() {
                 name="vorvertrag" value={values.vorvertrag} onChange={set('vorvertrag')}
                 options={[
                   { value: 'vorversicherer', label: 'Durch Vorversicherer (Versicherer hat gekündigt)' },
-                  { value: 'vn_gekuendigt', label: 'VN hat selbst gekündigt' },
+                  { value: 'vn_gekuendigt', label: 'Versicherungsnehmer hat selbst gekündigt' },
                 ]}
               />
             </Field>
             <Field label="Gemeldete Schäden in den letzten 2 Jahren" optional>
               <TextInput id="gemeldeteSchaeden" type="number" value={values.gemeldeteSchaeden} onChange={set('gemeldeteSchaeden')} placeholder="0" />
-            </Field>
-            <Field label="War das Fahrzeug in den letzten 7 Jahren auf Ihren Namen versichert?" optional>
-              <RadioCards
-                name="versicherung7Jahre" value={values.versicherung7Jahre} onChange={set('versicherung7Jahre')}
-                options={[{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }]}
-              />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Bei welchem Versicherer?" optional>
@@ -776,11 +743,6 @@ export default function KfzFormularPage() {
                 </Field>
                 <Field label="Haftpflicht (€)" optional>
                   <TextInput id="beitragHaftpflicht" type="number" value={values.beitragHaftpflicht} onChange={set('beitragHaftpflicht')} placeholder="0" />
-                </Field>
-              </div>
-              <div className="mt-4">
-                <Field label="Gesellschaft" optional>
-                  <TextInput id="beitragGesellschaft" value={values.beitragGesellschaft} onChange={set('beitragGesellschaft')} placeholder="z. B. Allianz" />
                 </Field>
               </div>
             </div>
