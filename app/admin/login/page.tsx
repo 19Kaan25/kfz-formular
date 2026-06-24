@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(false)
 
     if (error) {
-      setError('E-Mail oder Passwort falsch.')
+      setError(`Fehler: ${error.message}`)
       return
     }
 
