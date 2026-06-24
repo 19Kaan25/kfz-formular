@@ -37,7 +37,7 @@ export default function LoginPage() {
     setError(null)
 
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://kfz-formular.vercel.app/auth/callback?type=recovery',
+      redirectTo: 'https://koeten-tfgmbh.vercel.app/auth/callback?type=recovery',
     })
 
     setLoading(false)
