@@ -148,6 +148,58 @@ function buildNafiText(a: Anfrage): string {
   ].join('\n')
 }
 
+// ─── Einzelnes Feld mit Kopieren-Button ──────────────────────────────────────
+
+function CopyField({ label, value }: { label: string; value: string | null }) {
+  const [copied, setCopied] = useState(false)
+  if (!value) return (
+    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+      <span className="text-xs text-gray-500 w-40 shrink-0">{label}</span>
+      <span className="text-xs text-gray-300 italic flex-1 text-right">–</span>
+    </div>
+  )
+
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(value) }
+    catch {
+      const ta = document.createElement('textarea')
+      ta.value = value
+      document.body.appendChild(ta)
+      ta.select()
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 gap-2">
+      <span className="text-xs text-gray-500 w-40 shrink-0">{label}</span>
+      <span className="text-sm text-gray-900 flex-1">{value}</span>
+      <button
+        onClick={handleCopy}
+        title="Kopieren"
+        className={`shrink-0 px-2 py-1 rounded text-xs font-medium transition-colors ${
+          copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+        }`}
+      >
+        {copied ? '✓' : '📋'}
+      </button>
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{title}</p>
+      <div className="bg-gray-50 rounded-lg px-3">{children}</div>
+    </div>
+  )
+}
+
 // ─── Detailansicht ────────────────────────────────────────────────────────────
 
 function AnfrageDetail({ anfrage, onClose, onStatusChange, onDelete }: {
@@ -156,11 +208,21 @@ function AnfrageDetail({ anfrage, onClose, onStatusChange, onDelete }: {
   onStatusChange: (id: string, status: 'neu' | 'erledigt') => void
   onDelete: (id: string) => void
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copiedAll, setCopiedAll] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const text = buildNafiText(anfrage)
 
-  const handleCopy = async () => {
+  const statusMap: Record<string, string> = {
+    neu: 'Neues Fahrzeug', wechsel: 'Versichererwechsel', anderer: 'Anderer Halter'
+  }
+  const vorvertragMap: Record<string, string> = {
+    vorversicherer: 'VN = Vorversicherer', vn_gekuendigt: 'VN hat gekündigt'
+  }
+  const fahrleistungLabel = anfrage.jaehrliche_fahrleistung === 'unbegrenzt'
+    ? 'Unbegrenzt'
+    : anfrage.jaehrliche_fahrleistung ? `${anfrage.jaehrliche_fahrleistung} km` : null
+
+  const handleCopyAll = async () => {
+    const text = buildNafiText(anfrage)
     try { await navigator.clipboard.writeText(text) }
     catch {
       const ta = document.createElement('textarea')
@@ -171,8 +233,8 @@ function AnfrageDetail({ anfrage, onClose, onStatusChange, onDelete }: {
       document.execCommand('copy')
       document.body.removeChild(ta)
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+    setCopiedAll(true)
+    setTimeout(() => setCopiedAll(false), 2500)
   }
 
   return (
@@ -191,23 +253,77 @@ function AnfrageDetail({ anfrage, onClose, onStatusChange, onDelete }: {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
 
-        {/* NAFI-Text */}
-        <div className="p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">NAFI-Zusammenfassung</p>
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 font-mono text-xs text-gray-800 whitespace-pre leading-relaxed overflow-x-auto max-h-96 overflow-y-auto">
-            {text}
-          </div>
+        {/* Felder mit einzelnen Kopieren-Buttons */}
+        <div className="p-5 space-y-4 max-h-[65vh] overflow-y-auto">
+          <Section title="1. Personenbezogene Daten">
+            <CopyField label="E-Mail" value={anfrage.email} />
+            <CopyField label="Vorname" value={anfrage.vorname} />
+            <CopyField label="Nachname" value={anfrage.nachname} />
+            <CopyField label="Straße" value={anfrage.strasse} />
+            <CopyField label="PLZ" value={anfrage.plz} />
+            <CopyField label="Ort" value={anfrage.ort} />
+            <CopyField label="Geburtsdatum" value={fmtDate(anfrage.geburtsdatum_vn)} />
+          </Section>
+
+          <Section title="2. Fahrzeugdaten">
+            <CopyField label="HSN" value={anfrage.hsn} />
+            <CopyField label="TSN" value={anfrage.tsn} />
+            <CopyField label="Fahrzeugkategorie" value={anfrage.fahrzeug_kategorie} />
+            <CopyField label="Hersteller" value={anfrage.hersteller} />
+            <CopyField label="Erstzulassung" value={fmtDate(anfrage.datum_erstzulassung)} />
+            <CopyField label="Datum Erwerb" value={fmtDate(anfrage.datum_erwerb)} />
+            <CopyField label="Neuwert" value={anfrage.neuwert ? `${anfrage.neuwert} €` : null} />
+            <CopyField label="Jährl. Fahrleistung" value={fahrleistungLabel} />
+          </Section>
+
+          <Section title="3. Fahrzeugstatus">
+            <CopyField label="Status" value={anfrage.fahrzeug_status ? (statusMap[anfrage.fahrzeug_status] ?? anfrage.fahrzeug_status) : null} />
+            {anfrage.fahrzeug_status === 'anderer' && <>
+              <CopyField label="Name Fahrzeughalter" value={anfrage.name_fahrzeughalter} />
+              <CopyField label="PLZ Fahrzeughalter" value={anfrage.plz_fahrzeughalter} />
+            </>}
+          </Section>
+
+          <Section title="4. Abstellort">
+            <CopyField label="Abstellort" value={anfrage.abstellort} />
+            <CopyField label="Abschließbar" value={anfrage.abstellort_abschliessbar === 'ja' ? 'Ja' : anfrage.abstellort_abschliessbar === 'nein' ? 'Nein' : null} />
+          </Section>
+
+          <Section title="5. Nutzung">
+            <CopyField label="Nutzerkreis" value={anfrage.nutzerkreis} />
+            <CopyField label="Saison von" value={fmtDate(anfrage.saison_start)} />
+            <CopyField label="Saison bis" value={fmtDate(anfrage.saison_ende)} />
+          </Section>
+
+          <Section title="6. Versicherungsdaten">
+            <CopyField label="SF-Klasse Haftpflicht" value={anfrage.sf_klasse_haftpflicht} />
+            <CopyField label="Vorvertrag" value={anfrage.vorvertrag ? (vorvertragMap[anfrage.vorvertrag] ?? anfrage.vorvertrag) : null} />
+            <CopyField label="SF-Klasse Vollkasko" value={anfrage.sf_klasse_vollkasko} />
+            <CopyField label="Gemeldete Schäden" value={anfrage.gemeldete_schaeden} />
+            <CopyField label="Versicherer" value={anfrage.bei_welchem_versicherer} />
+            <CopyField label="Wie lange dort" value={anfrage.wie_lange_bei_versicherer} />
+            <CopyField label="Finanzierung" value={anfrage.finanzierung} />
+            {anfrage.finanzierung && anfrage.finanzierung !== 'eigenfinanziert' &&
+              <CopyField label="Mehrwert" value={anfrage.mehrwert ? `${anfrage.mehrwert} €` : null} />
+            }
+            <CopyField label="Deckung Haftpflicht" value={anfrage.deckung_haftpflicht} />
+            <CopyField label="Zahlungsart" value={anfrage.zahlungsart} />
+            <CopyField label="Zahlungsweise" value={anfrage.zahlungsweise} />
+            <CopyField label="Beitrag Vollkasko" value={anfrage.beitrag_vollkasko ? `${anfrage.beitrag_vollkasko} €` : null} />
+            <CopyField label="Beitrag Teilkasko" value={anfrage.beitrag_teilkasko ? `${anfrage.beitrag_teilkasko} €` : null} />
+            <CopyField label="Beitrag Haftpflicht" value={anfrage.beitrag_haftpflicht ? `${anfrage.beitrag_haftpflicht} €` : null} />
+          </Section>
         </div>
 
         {/* Aktionen */}
-        <div className="p-5 pt-0 flex flex-wrap gap-3">
+        <div className="p-5 border-t border-gray-100 flex flex-wrap gap-3">
           <button
-            onClick={handleCopy}
+            onClick={handleCopyAll}
             className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-              copied ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+              copiedAll ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
           >
-            {copied ? '✓ Kopiert!' : '📋 In NAFI kopieren'}
+            {copiedAll ? '✓ Alles kopiert!' : '📋 Alles kopieren (NAFI)'}
           </button>
           <button
             onClick={() => onStatusChange(anfrage.id, anfrage.status === 'neu' ? 'erledigt' : 'neu')}
