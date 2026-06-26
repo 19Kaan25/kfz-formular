@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import { TRANSLATIONS, type Lang, type T } from './translations'
 import { supabase } from '@/lib/supabase'
 
@@ -578,6 +579,13 @@ export default function KfzFormularPage() {
           </div>
 
         </form>
+
+        {/* Footer */}
+        <div className="mt-8 pb-6 text-center text-xs text-gray-400 space-x-4">
+          <Link href="/impressum" className="hover:text-gray-600 hover:underline">Impressum & Datenschutz</Link>
+          <span>© {new Date().getFullYear()} Thiele Finanz GmbH</span>
+        </div>
+
       </div>
     </div>
   )

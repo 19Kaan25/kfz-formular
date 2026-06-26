@@ -202,7 +202,7 @@ const de: T = {
   submitLoading: 'Wird gesendet …',
   newRequestButton: 'Neue Anfrage stellen',
   errSubmit: 'Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
-  submitNote: 'Mit dem Absenden bestätigen Sie, dass Ihre Angaben korrekt sind. Die Daten werden ausschließlich zur Erstellung eines Versicherungsangebots verwendet und nicht an Dritte weitergegeben.',
+  submitNote: 'Ihre Daten werden von der Thiele Finanz GmbH ausschließlich zur Erstellung eines KFZ-Versicherungsangebots verarbeitet (Art. 6 Abs. 1 lit. b DSGVO) und nicht an Dritte weitergegeben. Speicherung in der EU. Löschung nach Abschluss der Bearbeitung, spätestens nach 12 Monaten.',
 
   errBannerTitle: 'Bitte Pflichtfelder ausfüllen',
   errBannerText: 'Einige Pflichtfelder fehlen oder enthalten ungültige Werte. Bitte prüfen Sie die rot markierten Felder.',
@@ -429,7 +429,7 @@ const tr: T = {
   submitLoading: 'Gönderiliyor …',
   newRequestButton: 'Yeni talep oluştur',
   errSubmit: 'Talep gönderilemedi. Lütfen tekrar deneyin.',
-  submitNote: 'Göndererek bilgilerinizin doğru olduğunu onaylıyorsunuz. Verileriniz yalnızca sigorta teklifinizi hazırlamak için kullanılacak ve üçüncü şahıslarla paylaşılmayacaktır.',
+  submitNote: 'Verileriniz, Thiele Finanz GmbH tarafından yalnızca bir KFZ sigorta teklifi hazırlamak amacıyla işlenecek ve üçüncü taraflarla paylaşılmayacaktır. AB sunucularında saklanır. İşlem tamamlandıktan sonra, en geç 12 ay içinde silinir.',
 
   errBannerTitle: 'Lütfen zorunlu alanları doldurun',
   errBannerText: 'Bazı zorunlu alanlar eksik veya hatalı. Lütfen kırmızı ile işaretli alanları kontrol edin.',
