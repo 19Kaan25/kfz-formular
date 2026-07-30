@@ -31,6 +31,10 @@ interface Anfrage {
   abstellort: string | null
   abstellort_abschliessbar: string | null
   nutzerkreis: string | null
+  partner_geburtsdatum: string | null
+  fahrer_unter_23: string | null
+  geburtsdatum_juengster_fahrer: string | null
+  geburtsdatum_aeltester_fahrer: string | null
   saison_start: string | null
   saison_ende: string | null
   sf_klasse_haftpflicht: string | null
@@ -121,6 +125,10 @@ function buildNafiText(a: Anfrage): string {
     '5. NUTZUNG',
     '───────────────────────────────────────────',
     row('Nutzerkreis', a.nutzerkreis),
+    row('Geburtsdatum Partner', fmtDate(a.partner_geburtsdatum)),
+    row('Fahrer unter 23', a.fahrer_unter_23 === 'ja' ? 'Ja' : a.fahrer_unter_23 === 'nein' ? 'Nein' : null),
+    row('Geburtsdatum jüngster Fahrer', fmtDate(a.geburtsdatum_juengster_fahrer)),
+    row('Geburtsdatum ältester Fahrer', fmtDate(a.geburtsdatum_aeltester_fahrer)),
     row('Saison von', fmtDate(a.saison_start)),
     row('Saison bis', fmtDate(a.saison_ende)),
     '',
@@ -291,6 +299,10 @@ function AnfrageDetail({ anfrage, onClose, onStatusChange, onDelete }: {
 
           <Section title="5. Nutzung">
             <CopyField label="Nutzerkreis" value={anfrage.nutzerkreis} />
+            <CopyField label="Geburtsdatum Partner" value={fmtDate(anfrage.partner_geburtsdatum)} />
+            <CopyField label="Fahrer unter 23" value={anfrage.fahrer_unter_23 === 'ja' ? 'Ja' : anfrage.fahrer_unter_23 === 'nein' ? 'Nein' : null} />
+            <CopyField label="Geb. jüngster Fahrer" value={fmtDate(anfrage.geburtsdatum_juengster_fahrer)} />
+            <CopyField label="Geb. ältester Fahrer" value={fmtDate(anfrage.geburtsdatum_aeltester_fahrer)} />
             <CopyField label="Saison von" value={fmtDate(anfrage.saison_start)} />
             <CopyField label="Saison bis" value={fmtDate(anfrage.saison_ende)} />
           </Section>

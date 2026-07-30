@@ -11,12 +11,14 @@ import { supabase } from '@/lib/supabase'
 interface FormValues {
   email: string; vorname: string; name: string; strasse: string
   plz: string; ort: string; geburtsdatum: string
-  hsn: string; tsn: string; fahrzeugKategorie: string; hersteller: string
-  datumErstzulassung: string; datumErwerb: string; neuwert: string
+  hsn: string; tsn: string; fahrzeugKategorie: string
+  datumErstzulassung: string; datumErwerb: string
   jaehrlicheFahrleistung: string
   fahrzeugStatus: string; nameFahrzeughalter: string; plzFahrzeughalter: string
   abstellort: string; abstellortAbschliessbar: string
-  nutzerkreis: string; saisonStart: string; saisonEnde: string
+  nutzerkreis: string; partnerGeburtsdatum: string; fahrerUnter23: string
+  geburtsdatumJuengsterFahrer: string; geburtsdatumAeltesterFahrer: string
+  saisonStart: string; saisonEnde: string
   sfKlasseHaftpflicht: string; vorvertrag: string; sfKlasseVollkasko: string
   gemeldeteSchaeden: string; beiWelchemVersicherer: string
   wieLangeBeiVersicherer: string; finanzierung: string; mehrwert: string
@@ -28,11 +30,13 @@ type Errors = Partial<Record<keyof FormValues, string>>
 
 const INITIAL: FormValues = {
   email: '', vorname: '', name: '', strasse: '', plz: '', ort: '',
-  geburtsdatum: '', hsn: '', tsn: '', fahrzeugKategorie: '', hersteller: '',
-  datumErstzulassung: '', datumErwerb: '', neuwert: '',
+  geburtsdatum: '', hsn: '', tsn: '', fahrzeugKategorie: '',
+  datumErstzulassung: '', datumErwerb: '',
   jaehrlicheFahrleistung: '', fahrzeugStatus: '', nameFahrzeughalter: '',
   plzFahrzeughalter: '', abstellort: '', abstellortAbschliessbar: '',
-  nutzerkreis: '', saisonStart: '', saisonEnde: '', sfKlasseHaftpflicht: '',
+  nutzerkreis: '', partnerGeburtsdatum: '', fahrerUnter23: '',
+  geburtsdatumJuengsterFahrer: '', geburtsdatumAeltesterFahrer: '',
+  saisonStart: '', saisonEnde: '', sfKlasseHaftpflicht: '',
   vorvertrag: '', sfKlasseVollkasko: '', gemeldeteSchaeden: '',
   beiWelchemVersicherer: '', wieLangeBeiVersicherer: '',
   finanzierung: '', mehrwert: '', deckungHaftpflicht: '', zahlungsart: '',
@@ -125,6 +129,12 @@ function RadioCards({ name, value, onChange, options, cols = 2 }: {
       {options.map(o => (
         <label
           key={o.value}
+          onClick={e => {
+            if (value === o.value) {
+              e.preventDefault()
+              onChange('')
+            }
+          }}
           className={`flex cursor-pointer items-center gap-2.5 rounded-lg border p-3 text-sm transition-colors ${
             value === o.value
               ? 'border-blue-500 bg-blue-50 text-blue-800 font-medium'
@@ -207,6 +217,50 @@ export default function KfzFormularPage() {
     setErrors(prev => ({ ...prev, [field]: undefined }))
   }
 
+  const setFahrzeugStatus = (v: string) => {
+    setValues(prev => ({
+      ...prev,
+      fahrzeugStatus: v,
+      ...(v !== 'anderer' ? { nameFahrzeughalter: '', plzFahrzeughalter: '' } : {}),
+    }))
+    setErrors(prev => ({ ...prev, fahrzeugStatus: undefined, nameFahrzeughalter: undefined, plzFahrzeughalter: undefined }))
+  }
+
+  const setFinanzierung = (v: string) => {
+    setValues(prev => ({
+      ...prev,
+      finanzierung: v,
+      ...(!v || v === 'eigenfinanziert' ? { mehrwert: '' } : {}),
+    }))
+    setErrors(prev => ({ ...prev, finanzierung: undefined }))
+  }
+
+  const setNutzerkreis = (v: string) => {
+    setValues(prev => ({
+      ...prev,
+      nutzerkreis: v,
+      ...(v !== 'vn_partner' ? { partnerGeburtsdatum: '' } : {}),
+      ...(v !== 'ohne_einschraenkung' ? { fahrerUnter23: '' } : {}),
+      ...(v !== 'vn_haeusliche_gemeinschaft'
+        ? { geburtsdatumJuengsterFahrer: '', geburtsdatumAeltesterFahrer: '' }
+        : {}),
+    }))
+    setErrors(prev => ({ ...prev, nutzerkreis: undefined }))
+  }
+
+  // Nullt Unterfelder, deren übergeordnete Auswahl nicht (mehr) zutrifft –
+  // verhindert, dass versteckte, veraltete Eingaben mit übermittelt werden.
+  const sanitizeForSubmit = (v: FormValues): FormValues => ({
+    ...v,
+    ...(v.fahrzeugStatus !== 'anderer' ? { nameFahrzeughalter: '', plzFahrzeughalter: '' } : {}),
+    ...(!v.finanzierung || v.finanzierung === 'eigenfinanziert' ? { mehrwert: '' } : {}),
+    ...(v.nutzerkreis !== 'vn_partner' ? { partnerGeburtsdatum: '' } : {}),
+    ...(v.nutzerkreis !== 'ohne_einschraenkung' ? { fahrerUnter23: '' } : {}),
+    ...(v.nutzerkreis !== 'vn_haeusliche_gemeinschaft'
+      ? { geburtsdatumJuengsterFahrer: '', geburtsdatumAeltesterFahrer: '' }
+      : {}),
+  })
+
   const validate = (): boolean => {
     const e: Errors = {}
     if (!values.vorname.trim()) e.vorname = t.errVorname
@@ -219,6 +273,9 @@ export default function KfzFormularPage() {
     if (!values.hsn.trim()) e.hsn = t.errHsn
     else if (!/^\d{4}$/.test(values.hsn.trim())) e.hsn = t.errHsnFormat
     if (!values.tsn.trim()) e.tsn = t.errTsn
+    if (!values.datumErstzulassung) e.datumErstzulassung = t.errDatumErstzulassung
+    if (!values.datumErwerb) e.datumErwerb = t.errDatumErwerb
+    if (!values.jaehrlicheFahrleistung) e.jaehrlicheFahrleistung = t.errJaehrlicheFahrleistung
     if (values.fahrzeugStatus === 'anderer') {
       if (!values.nameFahrzeughalter.trim()) e.nameFahrzeughalter = t.errNameFahrzeughalter
       if (!values.plzFahrzeughalter.trim()) e.plzFahrzeughalter = t.errPlzFahrzeughalter
@@ -241,44 +298,48 @@ export default function KfzFormularPage() {
     setLoading(true)
     setSubmitError(null)
 
+    const payload = sanitizeForSubmit(values)
+
     const { error } = await supabase.from('anfragen').insert({
-      email: values.email || null,
-      vorname: values.vorname,
-      nachname: values.name,
-      strasse: values.strasse,
-      plz: values.plz,
-      ort: values.ort,
-      geburtsdatum_vn: values.geburtsdatum,
-      hsn: values.hsn,
-      tsn: values.tsn,
-      fahrzeug_kategorie: values.fahrzeugKategorie || null,
-      hersteller: values.hersteller || null,
-      datum_erstzulassung: values.datumErstzulassung || null,
-      datum_erwerb: values.datumErwerb || null,
-      neuwert: values.neuwert || null,
-      jaehrliche_fahrleistung: values.jaehrlicheFahrleistung || null,
-      fahrzeug_status: values.fahrzeugStatus || null,
-      name_fahrzeughalter: values.nameFahrzeughalter || null,
-      plz_fahrzeughalter: values.plzFahrzeughalter || null,
-      abstellort: values.abstellort || null,
-      abstellort_abschliessbar: values.abstellortAbschliessbar || null,
-      nutzerkreis: values.nutzerkreis || null,
-      saison_start: values.saisonStart || null,
-      saison_ende: values.saisonEnde || null,
-      sf_klasse_haftpflicht: values.sfKlasseHaftpflicht || null,
-      vorvertrag: values.vorvertrag || null,
-      sf_klasse_vollkasko: values.sfKlasseVollkasko || null,
-      gemeldete_schaeden: values.gemeldeteSchaeden || null,
-      bei_welchem_versicherer: values.beiWelchemVersicherer || null,
-      wie_lange_bei_versicherer: values.wieLangeBeiVersicherer || null,
-      finanzierung: values.finanzierung || null,
-      mehrwert: values.mehrwert || null,
-      deckung_haftpflicht: values.deckungHaftpflicht || null,
-      zahlungsart: values.zahlungsart || null,
-      zahlungsweise: values.zahlungsweise || null,
-      beitrag_vollkasko: values.beitragVollkasko || null,
-      beitrag_teilkasko: values.beitragTeilkasko || null,
-      beitrag_haftpflicht: values.beitragHaftpflicht || null,
+      email: payload.email || null,
+      vorname: payload.vorname,
+      nachname: payload.name,
+      strasse: payload.strasse,
+      plz: payload.plz,
+      ort: payload.ort,
+      geburtsdatum_vn: payload.geburtsdatum,
+      hsn: payload.hsn,
+      tsn: payload.tsn,
+      fahrzeug_kategorie: payload.fahrzeugKategorie || null,
+      datum_erstzulassung: payload.datumErstzulassung || null,
+      datum_erwerb: payload.datumErwerb || null,
+      jaehrliche_fahrleistung: payload.jaehrlicheFahrleistung || null,
+      fahrzeug_status: payload.fahrzeugStatus || null,
+      name_fahrzeughalter: payload.nameFahrzeughalter || null,
+      plz_fahrzeughalter: payload.plzFahrzeughalter || null,
+      abstellort: payload.abstellort || null,
+      abstellort_abschliessbar: payload.abstellortAbschliessbar || null,
+      nutzerkreis: payload.nutzerkreis || null,
+      partner_geburtsdatum: payload.partnerGeburtsdatum || null,
+      fahrer_unter_23: payload.fahrerUnter23 || null,
+      geburtsdatum_juengster_fahrer: payload.geburtsdatumJuengsterFahrer || null,
+      geburtsdatum_aeltester_fahrer: payload.geburtsdatumAeltesterFahrer || null,
+      saison_start: payload.saisonStart || null,
+      saison_ende: payload.saisonEnde || null,
+      sf_klasse_haftpflicht: payload.sfKlasseHaftpflicht || null,
+      vorvertrag: payload.vorvertrag || null,
+      sf_klasse_vollkasko: payload.sfKlasseVollkasko || null,
+      gemeldete_schaeden: payload.gemeldeteSchaeden || null,
+      bei_welchem_versicherer: payload.beiWelchemVersicherer || null,
+      wie_lange_bei_versicherer: payload.wieLangeBeiVersicherer || null,
+      finanzierung: payload.finanzierung || null,
+      mehrwert: payload.mehrwert || null,
+      deckung_haftpflicht: payload.deckungHaftpflicht || null,
+      zahlungsart: payload.zahlungsart || null,
+      zahlungsweise: payload.zahlungsweise || null,
+      beitrag_vollkasko: payload.beitragVollkasko || null,
+      beitrag_teilkasko: payload.beitragTeilkasko || null,
+      beitrag_haftpflicht: payload.beitragHaftpflicht || null,
     })
 
     setLoading(false)
@@ -398,35 +459,25 @@ export default function KfzFormularPage() {
                   placeholder={t.tsnPlaceholder} error={errors.tsn} />
               </Field>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label={t.fahrzeugKategorieLabel} optional={t.optional}>
-                <SelectInput id="fahrzeugKategorie" value={values.fahrzeugKategorie}
-                  onChange={set('fahrzeugKategorie')} options={t.fahrzeugKategorieOptions}
-                  placeholder={t.selectPlaceholder} />
-              </Field>
-              <Field label={t.herstellerLabel} optional={t.optional} help={t.herstellerHelp}>
-                <TextInput id="hersteller" value={values.hersteller} onChange={set('hersteller')}
-                  placeholder={t.herstellerPlaceholder} />
-              </Field>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label={t.datumErstzulassungLabel} optional={t.optional}>
-                <TextInput id="datumErstzulassung" type="date" value={values.datumErstzulassung}
-                  onChange={set('datumErstzulassung')} />
-              </Field>
-              <Field label={t.datumErwerbLabel} optional={t.optional}>
-                <TextInput id="datumErwerb" type="date" value={values.datumErwerb}
-                  onChange={set('datumErwerb')} />
-              </Field>
-            </div>
-            <Field label={t.neuwertLabel} optional={t.optional}>
-              <TextInput id="neuwert" type="number" value={values.neuwert}
-                onChange={set('neuwert')} placeholder={t.neuwertPlaceholder} />
+            <Field label={t.fahrzeugKategorieLabel} optional={t.optional}>
+              <SelectInput id="fahrzeugKategorie" value={values.fahrzeugKategorie}
+                onChange={set('fahrzeugKategorie')} options={t.fahrzeugKategorieOptions}
+                placeholder={t.selectPlaceholder} />
             </Field>
-            <Field label={t.jaehrlicheFahrleistungLabel} optional={t.optional}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label={t.datumErstzulassungLabel} required>
+                <TextInput id="datumErstzulassung" type="date" value={values.datumErstzulassung}
+                  onChange={set('datumErstzulassung')} error={errors.datumErstzulassung} />
+              </Field>
+              <Field label={t.datumErwerbLabel} required>
+                <TextInput id="datumErwerb" type="date" value={values.datumErwerb}
+                  onChange={set('datumErwerb')} error={errors.datumErwerb} />
+              </Field>
+            </div>
+            <Field label={t.jaehrlicheFahrleistungLabel} required>
               <SelectInput id="jaehrlicheFahrleistung" value={values.jaehrlicheFahrleistung}
                 onChange={set('jaehrlicheFahrleistung')} options={t.fahrleistungOptions}
-                placeholder={t.selectPlaceholder} />
+                placeholder={t.selectPlaceholder} error={errors.jaehrlicheFahrleistung} />
             </Field>
           </SectionCard>
 
@@ -434,7 +485,7 @@ export default function KfzFormularPage() {
           <SectionCard num={3} title={t.s3Title}>
             <Field label={t.fahrzeugStatusQuestion} optional={t.optional}>
               <RadioCards name="fahrzeugStatus" value={values.fahrzeugStatus}
-                onChange={set('fahrzeugStatus')} cols={1}
+                onChange={setFahrzeugStatus} cols={1}
                 options={[
                   { value: 'neu', label: t.fahrzeugStatusNeu },
                   { value: 'wechsel', label: t.fahrzeugStatusWechsel },
@@ -474,8 +525,38 @@ export default function KfzFormularPage() {
           <SectionCard num={5} title={t.s5Title}>
             <Field label={t.nutzerkreisLabel} optional={t.optional} help={t.nutzerkreisHelp}>
               <RadioCards name="nutzerkreis" value={values.nutzerkreis}
-                onChange={set('nutzerkreis')} options={t.nutzerkreisOptions} />
+                onChange={setNutzerkreis} options={t.nutzerkreisOptions} />
             </Field>
+            {values.nutzerkreis === 'vn_partner' && (
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Field label={t.partnerGeburtsdatumLabel} optional={t.optional}>
+                  <TextInput id="partnerGeburtsdatum" type="date" value={values.partnerGeburtsdatum}
+                    onChange={set('partnerGeburtsdatum')} />
+                </Field>
+              </div>
+            )}
+            {values.nutzerkreis === 'ohne_einschraenkung' && (
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Field label={t.fahrerUnter23Label} optional={t.optional}>
+                  <RadioCards name="fahrerUnter23" value={values.fahrerUnter23}
+                    onChange={set('fahrerUnter23')}
+                    options={[{ value: 'ja', label: t.ja }, { value: 'nein', label: t.nein }]}
+                  />
+                </Field>
+              </div>
+            )}
+            {values.nutzerkreis === 'vn_haeusliche_gemeinschaft' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-4 border-l-2 border-blue-200">
+                <Field label={t.geburtsdatumJuengsterFahrerLabel} optional={t.optional}>
+                  <TextInput id="geburtsdatumJuengsterFahrer" type="date" value={values.geburtsdatumJuengsterFahrer}
+                    onChange={set('geburtsdatumJuengsterFahrer')} />
+                </Field>
+                <Field label={t.geburtsdatumAeltesterFahrerLabel} optional={t.optional}>
+                  <TextInput id="geburtsdatumAeltesterFahrer" type="date" value={values.geburtsdatumAeltesterFahrer}
+                    onChange={set('geburtsdatumAeltesterFahrer')} />
+                </Field>
+              </div>
+            )}
             <Field label={t.saisonLabel} optional={t.optional} help={t.saisonHelp}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -524,7 +605,7 @@ export default function KfzFormularPage() {
             </div>
             <Field label={t.finanzierungLabel} optional={t.optional}>
               <RadioCards name="finanzierung" value={values.finanzierung}
-                onChange={set('finanzierung')} options={t.finanzierungOptions} />
+                onChange={setFinanzierung} options={t.finanzierungOptions} />
             </Field>
             {values.finanzierung && values.finanzierung !== 'eigenfinanziert' && (
               <Field label={t.mehrwertLabel} optional={t.optional}>

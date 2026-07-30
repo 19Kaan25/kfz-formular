@@ -59,13 +59,8 @@ export interface T {
   tsnPlaceholder: string
   fahrzeugKategorieLabel: string
   fahrzeugKategorieOptions: { value: string; label: string }[]
-  herstellerLabel: string
-  herstellerHelp: string
-  herstellerPlaceholder: string
   datumErstzulassungLabel: string
   datumErwerbLabel: string
-  neuwertLabel: string
-  neuwertPlaceholder: string
   jaehrlicheFahrleistungLabel: string
   fahrleistungOptions: { value: string; label: string }[]
 
@@ -86,6 +81,10 @@ export interface T {
   nutzerkreisLabel: string
   nutzerkreisHelp: string
   nutzerkreisOptions: { value: string; label: string }[]
+  partnerGeburtsdatumLabel: string
+  fahrerUnter23Label: string
+  geburtsdatumJuengsterFahrerLabel: string
+  geburtsdatumAeltesterFahrerLabel: string
   saisonLabel: string
   saisonHelp: string
   saisonStartLabel: string
@@ -130,6 +129,9 @@ export interface T {
   errHsn: string
   errHsnFormat: string
   errTsn: string
+  errDatumErstzulassung: string
+  errDatumErwerb: string
+  errJaehrlicheFahrleistung: string
   errNameFahrzeughalter: string
   errPlzFahrzeughalter: string
   errPlzFahrzeughalterFormat: string
@@ -253,13 +255,8 @@ const de: T = {
     { value: 'Roller', label: 'Roller / Moped' },
     { value: 'Sonstiges', label: 'Sonstiges' },
   ],
-  herstellerLabel: 'Hersteller',
-  herstellerHelp: 'z. B. VW, BMW, Mercedes',
-  herstellerPlaceholder: 'z. B. VW',
   datumErstzulassungLabel: 'Datum Erstzulassung',
   datumErwerbLabel: 'Datum Erwerb',
-  neuwertLabel: 'Neuwert (€)',
-  neuwertPlaceholder: 'z. B. 25000',
   jaehrlicheFahrleistungLabel: 'Jährliche Fahrleistung',
   fahrleistungOptions: [
     ...[3000, 6000, 9000, 12000, 15000, 18000, 21000].map(n => ({
@@ -293,11 +290,14 @@ const de: T = {
   nutzerkreisHelp: 'VN = Versicherungsnehmer (die Person, die den Vertrag abschließt)',
   nutzerkreisOptions: [
     { value: 'nur_vn', label: 'Nur der VN' },
-    { value: 'vn_hauptnutzer', label: 'VN ist Hauptnutzer' },
     { value: 'vn_partner', label: 'VN + Partner' },
-    { value: 'ohne_einschraenkung', label: 'Ohne Einschränkung' },
+    { value: 'ohne_einschraenkung', label: 'Beliebiger Fahrer' },
     { value: 'vn_haeusliche_gemeinschaft', label: 'VN + häusl. Gemeinschaft' },
   ],
+  partnerGeburtsdatumLabel: 'Geburtsdatum des Partners',
+  fahrerUnter23Label: 'Gibt es Fahrer unter 23 Jahre?',
+  geburtsdatumJuengsterFahrerLabel: 'Geburtsdatum jüngster Fahrer',
+  geburtsdatumAeltesterFahrerLabel: 'Geburtsdatum ältester Fahrer',
   saisonLabel: 'Saisonkennzeichen',
   saisonHelp: 'Nur ausfüllen, wenn Sie ein Saisonkennzeichen haben.',
   saisonStartLabel: 'Start',
@@ -359,6 +359,9 @@ const de: T = {
   errHsn: 'Bitte HSN eingeben.',
   errHsnFormat: 'HSN besteht aus genau 4 Ziffern.',
   errTsn: 'Bitte TSN eingeben.',
+  errDatumErstzulassung: 'Bitte Datum der Erstzulassung angeben.',
+  errDatumErwerb: 'Bitte Datum des Erwerbs angeben.',
+  errJaehrlicheFahrleistung: 'Bitte jährliche Fahrleistung auswählen.',
   errNameFahrzeughalter: 'Bitte Namen des Fahrzeughalters eingeben.',
   errPlzFahrzeughalter: 'Bitte PLZ des Fahrzeughalters eingeben.',
   errPlzFahrzeughalterFormat: 'PLZ muss 5 Ziffern haben.',
@@ -480,13 +483,8 @@ const tr: T = {
     { value: 'Roller', label: 'Scooter / Moped' },
     { value: 'Sonstiges', label: 'Diğer' },
   ],
-  herstellerLabel: 'Araç Markası',
-  herstellerHelp: 'Örn. VW, BMW, Mercedes',
-  herstellerPlaceholder: 'Örn. VW',
   datumErstzulassungLabel: 'İlk Tescil Tarihi',
   datumErwerbLabel: 'Alım Tarihi',
-  neuwertLabel: 'Yeni Değer (€)',
-  neuwertPlaceholder: 'Örn. 25000',
   jaehrlicheFahrleistungLabel: 'Yıllık Kilometre',
   fahrleistungOptions: [
     ...[3000, 6000, 9000, 12000, 15000, 18000, 21000].map(n => ({
@@ -520,11 +518,14 @@ const tr: T = {
   nutzerkreisHelp: 'Sigortalı = Sözleşmeyi imzalayan kişi (siz)',
   nutzerkreisOptions: [
     { value: 'nur_vn', label: 'Yalnızca Sigortalı' },
-    { value: 'vn_hauptnutzer', label: 'Sigortalı Ana Sürücü' },
     { value: 'vn_partner', label: 'Sigortalı + Eş / Partner' },
-    { value: 'ohne_einschraenkung', label: 'Sınırsız (Herkes)' },
+    { value: 'ohne_einschraenkung', label: 'Herhangi Bir Sürücü' },
     { value: 'vn_haeusliche_gemeinschaft', label: 'Sigortalı + Aynı Evdekiler' },
   ],
+  partnerGeburtsdatumLabel: 'Partnerin Doğum Tarihi',
+  fahrerUnter23Label: '23 yaşından küçük sürücü var mı?',
+  geburtsdatumJuengsterFahrerLabel: 'En genç sürücünün doğum tarihi',
+  geburtsdatumAeltesterFahrerLabel: 'En yaşlı sürücünün doğum tarihi',
   saisonLabel: 'Mevsimlik Plaka',
   saisonHelp: 'Yalnızca mevsimlik plakanız varsa doldurun.',
   saisonStartLabel: 'Başlangıç',
@@ -586,6 +587,9 @@ const tr: T = {
   errHsn: "Lütfen HSN'yi girin.",
   errHsnFormat: 'HSN tam olarak 4 rakamdan oluşmalıdır.',
   errTsn: "Lütfen TSN'yi girin.",
+  errDatumErstzulassung: 'Lütfen ilk tescil tarihini girin.',
+  errDatumErwerb: 'Lütfen alım tarihini girin.',
+  errJaehrlicheFahrleistung: 'Lütfen yıllık kilometreyi seçin.',
   errNameFahrzeughalter: 'Lütfen araç sahibinin adını ve soyadını girin.',
   errPlzFahrzeughalter: 'Lütfen araç sahibinin posta kodunu girin.',
   errPlzFahrzeughalterFormat: 'Posta kodu 5 haneli olmalıdır.',
