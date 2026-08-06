@@ -345,6 +345,7 @@ export default function KfzFormularPage() {
     setLoading(false)
 
     if (error) {
+      console.error('Supabase insert error:', error.code, error.message)
       setSubmitError(t.errSubmit)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
